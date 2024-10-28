@@ -1,59 +1,55 @@
 defmodule Exmoji.Mixfile do
   use Mix.Project
 
-  @source_url "https://github.com/mroth/exmoji"
-  @version "0.3.0"
-
   def project do
     [
       app: :exmoji,
-      version: @version,
-      elixir: "~> 1.4",
+      version: "0.2.2",
+      elixir: "~> 1.1",
+      deps: deps(),
       test_coverage: [tool: ExCoveralls],
       name: "Exmoji",
-      deps: deps(),
-      docs: docs(),
+      source_url: "https://github.com/mroth/exmoji",
+      description: description(),
       package: package(),
       aliases: aliases()
     ]
   end
 
+  defp description do
+    """
+    Emoji encoding swiss army knife for dealing with Unicode and other gotchas.
+    """
+  end
+
   defp package do
     [
-      description: "Emoji encoding swiss army knife for dealing with Unicode "
-        <> "and other gotchas.",
       maintainers: ["Matthew Rothenberg <mroth@mroth.info>"],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => @source_url
+        "Docs" => "https://hexdocs.pm/exmoji/",
+        "GitHub" => "https://github.com/mroth/exmoji"
       }
     ]
   end
 
+  # Configuration for the OTP application
+  #
+  # Type `mix help compile.app` for more information
   def application do
     [applications: []]
   end
 
+  # Dependencies
+  #
+  # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:jason, "~> 1.2"},
-      {:excoveralls, "~> 0.6", only: :dev},
-      {:benchfella, "~> 0.3", only: :dev},
-      {:earmark, "~> 1.1", only: :dev},
-      {:ex_doc, ">= 0.0.0", only: :dev}
-    ]
-  end
-
-  defp docs do
-    [
-      extras: [
-        "LICENSE.md": [title: "License"],
-        "README.md": [title: "Overview"]
-      ],
-      main: "readme",
-      source_url: @source_url,
-      source_ref: "v#{@version}",
-      formatters: ["html"]
+      {:poison, "~> 6.0"},
+      {:excoveralls, "~> 0.18.3", only: :dev},
+      {:benchfella, "~> 0.3.5", only: :dev},
+      {:earmark, "~> 1.4.47", only: :dev},
+      {:ex_doc, "~> 0.34.2", only: :dev}
     ]
   end
 

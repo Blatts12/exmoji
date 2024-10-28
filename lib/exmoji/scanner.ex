@@ -20,7 +20,7 @@ defmodule Exmoji.Scanner do
   """
   def scan(str) do
     bscan(str)
-    |> Enum.map(&Exmoji.char_to_unified/1)
+    |> Enum.map(&Exmoji.Util.char_to_unified/1)
     |> Enum.map(&Exmoji.from_unified/1)
   end
 
@@ -34,8 +34,12 @@ defmodule Exmoji.Scanner do
   #       new algorithm produces identical results.
   #
   # Thus it is kept as public so we can compare it in test...
-  fbs_pattern = Exmoji.chars(include_variants: true) |> Enum.join("|")
-  @fbs_regexp Regex.compile!( "(?:#{fbs_pattern})" )
+  fbs_pattern =
+    Exmoji.chars(include_variants: true)
+    |> Enum.map(fn emoji_char -> Regex.escape(emoji_char) end)
+    |> Enum.join("|")
+
+  @fbs_regexp Regex.compile!("(?:#{fbs_pattern})")
   @doc false
   def rscan(str) do
     Regex.scan(@fbs_regexp, str)
@@ -67,20 +71,21 @@ defmodule Exmoji.Scanner do
 
   # first we sort all known char glyphs by reverse bitsize, so we can use the
   # bigger binary patterns first when defining our pattern match functions.
-  sorted_chars = Enum.sort(
-    Exmoji.chars(include_variants: true),
-    &(&1 > &2)
-  )
+  sorted_chars =
+    Enum.sort(
+      Exmoji.chars(include_variants: true),
+      &(&1 > &2)
+    )
 
   # define functions that pattern match against each emojichar binary at head.
   for glyph <- sorted_chars do
-    defp _bscan(<< unquote(glyph), tail::binary >>, acc) do
+    defp _bscan(<<unquote(glyph), tail::binary>>, acc) do
       _bscan(tail, [unquote(glyph) | acc])
     end
   end
+
   # if nothing is found, cut the head off and move on.
-  defp _bscan(<< _head::utf8, tail::binary >>, acc), do: _bscan(tail, acc)
+  defp _bscan(<<_head::utf8, tail::binary>>, acc), do: _bscan(tail, acc)
   # when we reach the end, return reversed accumulator.
   defp _bscan(<<>>, acc), do: Enum.reverse(acc)
-
 end

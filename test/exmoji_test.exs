@@ -1,45 +1,44 @@
 defmodule ExmojiTest do
   use ExUnit.Case, async: true
   doctest Exmoji
+  doctest Exmoji.Util
 
   # Define a number of known Emoji library characteristics.
   # We should expect to get this many from our data file.
   # This may be manually updated in the future as Emoji evolves.
-  @known_chars      845
-  @known_doublebyte 21
-  @known_variants   107
-
+  @known_chars 1300
+  @known_doublebyte 287
+  @known_variants 134
 
   #
   # #all
   #
   test ".all - all #{@known_chars} emoji characters should be present" do
-    assert Exmoji.all |> Enum.count == @known_chars
+    assert Exmoji.all() |> Enum.count() == @known_chars
   end
 
   test ".all_doublebyte - convenience method for all doublebyte chars" do
-    assert Exmoji.all_doublebyte |> Enum.count == @known_doublebyte
+    assert Exmoji.all_doublebyte() |> Enum.count() == @known_doublebyte
   end
 
   test ".all_with_variants - convenience method for all variant chars" do
-    assert Exmoji.all_with_variants |> Enum.count == @known_variants
+    assert Exmoji.all_with_variants() |> Enum.count() == @known_variants
   end
-
 
   #
   # #chars
   #
   test ".chars - should return an array of all chars in unicode string format" do
-    assert is_list(Exmoji.chars)
-    assert Enum.all?(Exmoji.chars, fn c -> is_bitstring(c) end)
+    assert is_list(Exmoji.chars())
+    assert Enum.all?(Exmoji.chars(), fn c -> is_bitstring(c) end)
   end
 
   test ".chars - should by default return one entry per known EmojiChar" do
-    assert Enum.count(Exmoji.chars) == @known_chars
+    assert Enum.count(Exmoji.chars()) == @known_chars
   end
 
   test ".chars - should include variants in list when options {include_variants: true}" do
-    assert Exmoji.chars(include_variants: true) |> Enum.count == @known_chars + @known_variants
+    assert Exmoji.chars(include_variants: true) |> Enum.count() == @known_chars + @known_variants
   end
 
   test ".chars - should not have any duplicates in list when variants are included" do
@@ -47,26 +46,26 @@ defmodule ExmojiTest do
     assert Enum.count(results) == Enum.count(Enum.uniq(results))
   end
 
-
   #
   # #codepoints
   #
   test ".codepoints - returns list of all codepoints in dashed string representation" do
     results = Exmoji.codepoints()
     assert Enum.count(results) == @known_chars
+
     for r <- results do
-      assert String.match? r, ~r/^[0-9A-F\-]{4,11}$/
+      assert String.match?(r, ~r/^[0-9A-F\-]{4,42}$/)
     end
   end
 
   test ".codepoints - include variants in list when options {include_variants: true}" do
     results = Exmoji.codepoints(include_variants: true)
     assert Enum.count(results) == @known_chars + @known_variants
+
     for r <- results do
-      assert String.match? r, ~r/^[0-9A-F\-]{4,16}$/
+      assert String.match?(r, ~r/^[0-9A-F\-]{4,42}$/)
     end
   end
-
 
   #
   # #from_unified
@@ -88,20 +87,18 @@ defmodule ExmojiTest do
     assert Exmoji.from_unified("tacotacotaco") == nil
   end
 
-
   #
   # #find_by_name
   #
   test ".find_by_name - returns an array of results, upcasing input if needed" do
     results = Exmoji.find_by_name("tree")
     assert is_list(results)
-    assert results |> Enum.count == 5
+    assert results |> Enum.count() == 5
   end
 
   test ".find_by_name - returns empty list of no matches are found" do
     assert Exmoji.find_by_name("sdlkfjlskdfj") == []
   end
-
 
   #
   # #find_by_short_name
@@ -109,13 +106,12 @@ defmodule ExmojiTest do
   test ".find_by_short_name - returns a list of results, downcasing input if needed" do
     results = Exmoji.find_by_short_name("MOON")
     assert is_list(results)
-    assert results |> Enum.count == 13
+    assert results |> Enum.count() == 13
   end
 
   test ".find_by_short_name - returns empty list of no matches are found" do
     assert Exmoji.find_by_short_name("sdlkfjlskdfj") == []
   end
-
 
   #
   # #from_short_name
@@ -135,50 +131,47 @@ defmodule ExmojiTest do
   end
 
   test ".from_short_name - returns nil if nothing matches" do
-    assert Exmoji.from_short_name("taco") == nil
+    assert Exmoji.from_short_name("nacho") == nil
   end
-
 
   #
   # #char_to_unified
   #
   test ".char_to_unified - converts normal emoji to unified codepoint" do
-    assert Exmoji.char_to_unified("👾") == "1F47E"
-    assert Exmoji.char_to_unified("🚀") == "1F680"
+    assert Exmoji.Util.char_to_unified("👾") == "1F47E"
+    assert Exmoji.Util.char_to_unified("🚀") == "1F680"
   end
 
   test ".char_to_unified - converts double-byte emoji to proper codepoint" do
-    assert Exmoji.char_to_unified("🇺🇸") == "1F1FA-1F1F8"
+    assert Exmoji.Util.char_to_unified("🇺🇸") == "1F1FA-1F1F8"
   end
 
   test ".char_to_unified - in doublebyte, adds padding to hex codes that are <4 chars" do
-    assert Exmoji.char_to_unified("#⃣") == "0023-20E3"
+    assert Exmoji.Util.char_to_unified("#⃣") == "0023-20E3"
   end
 
   test ".char_to_unified - converts variant encoded emoji to variant unified codepoint" do
-    assert Exmoji.char_to_unified("\u{2601}\u{FE0F}") == "2601-FE0F"
+    assert Exmoji.Util.char_to_unified("\u{2601}\u{FE0F}") == "2601-FE0F"
   end
-
 
   #
   # #unified_to_char
   #
   test ".unified_to_char - converts normal unified codepoints to unicode strings" do
-    assert Exmoji.unified_to_char("1F47E") == "👾"
-    assert Exmoji.unified_to_char("1F680") == "🚀"
+    assert Exmoji.Util.unified_to_char("1F47E") == "👾"
+    assert Exmoji.Util.unified_to_char("1F680") == "🚀"
   end
 
   test ".unified_to_char - converts doublebyte unified codepoints to unicode strings" do
-    assert Exmoji.unified_to_char("1F1FA-1F1F8") == "🇺🇸"
-    assert Exmoji.unified_to_char("0023-20E3") == "#⃣"
+    assert Exmoji.Util.unified_to_char("1F1FA-1F1F8") == "🇺🇸"
+    assert Exmoji.Util.unified_to_char("0023-20E3") == "#⃣"
   end
 
   test ".unified_to_char - converts variant unified codepoints to unicode strings" do
-    assert Exmoji.unified_to_char("2764-fe0f") == "\u{2764}\u{FE0F}"
+    assert Exmoji.Util.unified_to_char("2764-fe0f") == "\u{2764}\u{FE0F}"
   end
 
   test ".unified_to_char - converts variant+doublebyte chars (triplets!) to unicode strings" do
-    assert Exmoji.unified_to_char("0030-FE0F-20E3") == "\u{0030}\u{FE0F}\u{20E3}"
+    assert Exmoji.Util.unified_to_char("0030-FE0F-20E3") == "\u{0030}\u{FE0F}\u{20E3}"
   end
-
 end
